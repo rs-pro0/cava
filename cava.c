@@ -168,7 +168,8 @@ static bool directory_exists(const char *path) {
 
 #endif
 
-float *monstercat_filter(float *bars, int number_of_bars, int waves, double monstercat) {
+float *monstercat_filter(float *bars, int number_of_bars, int waves, double monstercat,
+                         int height) {
 
     int z;
 
@@ -176,16 +177,17 @@ float *monstercat_filter(float *bars, int number_of_bars, int waves, double mons
 
     int m_y, de;
     if (waves > 0) {
+        float multiplier = (float)height / 912.76;
         for (z = 0; z < number_of_bars; z++) { // waves
             bars[z] = bars[z] / 1.25;
             // if (bars[z] < 1) bars[z] = 1;
             for (m_y = z - 1; m_y >= 0; m_y--) {
                 de = z - m_y;
-                bars[m_y] = max(bars[z] - pow(de, 2), bars[m_y]);
+                bars[m_y] = max(bars[z] - multiplier * pow(de, 2), bars[m_y]);
             }
             for (m_y = z + 1; m_y < number_of_bars; m_y++) {
                 de = m_y - z;
-                bars[m_y] = max(bars[z] - pow(de, 2), bars[m_y]);
+                bars[m_y] = max(bars[z] - multiplier * pow(de, 2), bars[m_y]);
             }
         }
     } else if (monstercat > 0) {
@@ -985,14 +987,15 @@ as of 0.4.0 all options are specified in config file, see in '/home/username/.co
                     // process [filter]
                     if (p.monstercat) {
                         if (audio_channels == 2) {
-                            bars_left = monstercat_filter(
-                                bars_left, number_of_bars / output_channels, p.waves, p.monstercat);
+                            bars_left =
+                                monstercat_filter(bars_left, number_of_bars / output_channels,
+                                                  p.waves, p.monstercat, *dimension_value);
                             bars_right =
                                 monstercat_filter(bars_right, number_of_bars / output_channels,
-                                                  p.waves, p.monstercat);
+                                                  p.waves, p.monstercat, *dimension_value);
                         } else {
-                            bars_raw =
-                                monstercat_filter(bars_raw, number_of_bars, p.waves, p.monstercat);
+                            bars_raw = monstercat_filter(bars_raw, number_of_bars, p.waves,
+                                                         p.monstercat, *dimension_value);
                         }
                     }
                     if (audio_channels == 2) {
